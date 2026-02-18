@@ -17,6 +17,7 @@ Write a complete draft petition based on the issue and argument entered by the u
 Return only valid HTML using <h3>, <h4>, <ul>, <li>, <p>. No markdown. No code fences.
 Include clear section headers and persuasive supporting points.
 Write the petition in the style of a change.org petition (do not reference change.org explicitly).
+The petition should be 3-4 paragraphs.
 """
 OUTPUT_MAX_WORDS_OUTLINE = "100"
 OUTPUT_MAX_WORDS_DRAFT = "250"
