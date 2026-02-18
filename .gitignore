@@ -1,0 +1,11 @@
+# Node / package manager
+node_modules/
+npm-debug.log*
+
+# Wrangler local state and secrets
+.wrangler/
+.dev.vars
+.env
+.env.local
+.env.*
+!.env.example

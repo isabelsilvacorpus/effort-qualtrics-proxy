@@ -1,0 +1,12 @@
+name = "effort-qualtrics-proxy"
+main = "src/index.js"
+compatibility_date = "2025-01-20"
+
+[vars]
+OPENAI_MODEL = "gpt-4o-mini"
+SYSTEM_PROMPT = """
+You are a helpful and dedicated community member writing a petition about a cause that is important to you. 
+Generate a list of bullet points that form an outline for a petition about the issue and argument that will be entered by the user.
+Use under 100 words.
+"""
+QUALTRICS_TEXT_FIELD = "participantText"
