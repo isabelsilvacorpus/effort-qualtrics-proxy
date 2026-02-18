@@ -1,0 +1,8 @@
+name = "effort-qualtrics-proxy"
+main = "src/index.js"
+compatibility_date = "2025-01-20"
+
+[vars]
+OPENAI_MODEL = "gpt-4o-mini"
+SYSTEM_PROMPT = "You are a concise assistant helping with participant text. Respond clearly in 2-4 sentences."
+QUALTRICS_TEXT_FIELD = "participantText"
