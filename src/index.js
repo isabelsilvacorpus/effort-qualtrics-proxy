@@ -81,7 +81,11 @@ export default {
       }
 
       const data = await openAiResponse.json();
-      const modelResponse = extractOutputText(data);
+      const usage = extractNumericUsage(data?.usage);
+      if (Object.keys(usage).length > 0) {
+        console.log("OpenAI usage", { model, ...usage });
+      }
+      const modelResponse = truncateToWordLimit(extractOutputText(data), 100);
 
       if (!modelResponse) {
         console.error("OpenAI response missing output text");
@@ -168,4 +172,41 @@ function extractOutputText(data) {
   }
 
   return chunks.join("\n").trim();
+}
+
+function truncateToWordLimit(text, maxWords) {
+  if (!text || typeof text !== "string") {
+    return "";
+  }
+  const words = text.trim().split(/\s+/);
+  if (words.length <= maxWords) {
+    return text.trim();
+  }
+  return `${words.slice(0, maxWords).join(" ")}...`;
+}
+
+function extractNumericUsage(usage) {
+  if (!usage || typeof usage !== "object") {
+    return {};
+  }
+
+  const result = {};
+  collectNumericFields(usage, "", result);
+  return result;
+}
+
+function collectNumericFields(value, prefix, target) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    target[prefix] = value;
+    return;
+  }
+
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return;
+  }
+
+  for (const [key, nestedValue] of Object.entries(value)) {
+    const nextPrefix = prefix ? `${prefix}.${key}` : key;
+    collectNumericFields(nestedValue, nextPrefix, target);
+  }
 }
