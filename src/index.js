@@ -20,6 +20,7 @@ export default {
       const textField = env.QUALTRICS_TEXT_FIELD || "participantText";
       const participantText = (payload[textField] || "").toString().trim();
       const sharedSecret = (payload.sharedSecret || "").toString();
+      const mode = normalizeMode(payload.mode);
 
       if (!env.OPENAI_API_KEY) {
         return json({ ok: false, error: "Missing OPENAI_API_KEY" }, 500);
@@ -39,11 +40,19 @@ export default {
           400
         );
       }
+      if (!mode) {
+        return json(
+          {
+            ok: false,
+            error: 'Invalid mode. Use "outline" or "draft".'
+          },
+          400
+        );
+      }
 
       const model = env.OPENAI_MODEL || "gpt-4o-mini";
-      const systemPrompt =
-        env.SYSTEM_PROMPT ||
-        "You are a concise assistant helping with participant text. Respond clearly in 2-4 sentences.";
+      const systemPrompt = getSystemPromptForMode(env, mode);
+      const maxWords = getMaxWordsForMode(env, mode);
 
       const openAiResponse = await fetch("https://api.openai.com/v1/responses", {
         method: "POST",
@@ -83,9 +92,9 @@ export default {
       const data = await openAiResponse.json();
       const usage = extractNumericUsage(data?.usage);
       if (Object.keys(usage).length > 0) {
-        console.log("OpenAI usage", { model, ...usage });
+        console.log("OpenAI usage", { model, mode, ...usage });
       }
-      const modelResponse = truncateToWordLimit(extractOutputText(data), 100);
+      const modelResponse = truncateToWordLimit(extractOutputText(data), maxWords);
 
       if (!modelResponse) {
         console.error("OpenAI response missing output text");
@@ -102,6 +111,7 @@ export default {
         {
           ok: true,
           model,
+          mode,
           model_response: modelResponse
         },
         200
@@ -178,11 +188,52 @@ function truncateToWordLimit(text, maxWords) {
   if (!text || typeof text !== "string") {
     return "";
   }
+  if (!maxWords || maxWords < 1) {
+    return text.trim();
+  }
   const words = text.trim().split(/\s+/);
   if (words.length <= maxWords) {
     return text.trim();
   }
   return `${words.slice(0, maxWords).join(" ")}...`;
+}
+
+function normalizeMode(input) {
+  const mode = (input || "outline").toString().trim().toLowerCase();
+  if (mode === "outline" || mode === "draft") {
+    return mode;
+  }
+  return "";
+}
+
+function getSystemPromptForMode(env, mode) {
+  const outlinePrompt =
+    env.SYSTEM_PROMPT_OUTLINE ||
+    env.SYSTEM_PROMPT ||
+    [
+      "You are helping write a petition outline.",
+      "Return only valid HTML using <h3>, <h4>, <ul>, <li>, <p>.",
+      "No markdown and no code fences."
+    ].join(" ");
+  const draftPrompt =
+    env.SYSTEM_PROMPT_DRAFT ||
+    [
+      "You are helping write a full petition draft.",
+      "Return only valid HTML using <h3>, <h4>, <ul>, <li>, <p>.",
+      "No markdown and no code fences."
+    ].join(" ");
+  return mode === "draft" ? draftPrompt : outlinePrompt;
+}
+
+function getMaxWordsForMode(env, mode) {
+  const defaultLimit = mode === "draft" ? 400 : 100;
+  const configured =
+    mode === "draft" ? env.OUTPUT_MAX_WORDS_DRAFT : env.OUTPUT_MAX_WORDS_OUTLINE;
+  const parsed = Number.parseInt(configured || "", 10);
+  if (Number.isFinite(parsed) && parsed >= 0) {
+    return parsed;
+  }
+  return defaultLimit;
 }
 
 function extractNumericUsage(usage) {

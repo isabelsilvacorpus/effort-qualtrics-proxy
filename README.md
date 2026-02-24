@@ -41,7 +41,10 @@ After deploy, copy your Worker URL, e.g.:
 Set in `wrangler.toml` (non-secret):
 
 - `OPENAI_MODEL` (default in project: `gpt-4o-mini`)
-- `SYSTEM_PROMPT` (instruction for the model)
+- `SYSTEM_PROMPT_OUTLINE` (system prompt when `mode=outline`)
+- `SYSTEM_PROMPT_DRAFT` (system prompt when `mode=draft`)
+- `OUTPUT_MAX_WORDS_OUTLINE` (default `100`)
+- `OUTPUT_MAX_WORDS_DRAFT` (default `400`)
 - `QUALTRICS_TEXT_FIELD` (request key to read free text, default: `participantText`)
 
 Set as Wrangler secrets:
@@ -61,6 +64,7 @@ In Survey Flow (after the block that collects free text):
 4. Body parameters:
    - `participantText` = piped text from your free-text question
    - `sharedSecret` = same value as `QUALTRICS_SHARED_SECRET`
+   - `mode` = `outline` or `draft`
 5. Response parsing:
    - Map `model_response` from JSON into an Embedded Data field (for example `AI_Response`).
 
@@ -70,8 +74,8 @@ Now `AI_Response` is included in Qualtrics response exports.
 
 Accepts either:
 
-- JSON: `{"participantText":"...","sharedSecret":"..."}`
-- Form-encoded: `participantText=...&sharedSecret=...`
+- JSON: `{"participantText":"...","sharedSecret":"...","mode":"outline"}`
+- Form-encoded: `participantText=...&sharedSecret=...&mode=draft`
 
 Returns JSON:
 
@@ -79,11 +83,30 @@ Returns JSON:
 {
   "ok": true,
   "model": "gpt-4o-mini",
+  "mode": "outline",
   "model_response": "..."
 }
 ```
 
-## 8) Local test
+## 8) Two-call setup in Qualtrics (outline + draft)
+
+1. Add Embedded Data fields in Survey Flow:
+   - `AI_Outline`
+   - `AI_Draft`
+2. Add Web Service call for outline:
+   - `participantText` = `${q://QID25/ChoiceTextEntryValue}` (replace with your QID)
+   - `sharedSecret` = your shared secret
+   - `mode` = `outline`
+   - Response mapping: `model_response` -> `AI_Outline`
+3. Add Web Service call for draft:
+   - `participantText` = `${q://QID25/ChoiceTextEntryValue}`
+   - `sharedSecret` = your shared secret
+   - `mode` = `draft`
+   - Response mapping: `model_response` -> `AI_Draft`
+
+You can run both calls, or branch and run only one based on prior survey logic.
+
+## 9) Local test
 
 ```bash
 npx wrangler dev
@@ -94,10 +117,10 @@ In another terminal:
 ```bash
 curl -X POST "http://127.0.0.1:8787/v1/qualtrics-chat" \
   -H "content-type: application/json" \
-  -d '{"participantText":"I feel good about this task.","sharedSecret":"<same-secret>"}'
+  -d '{"participantText":"I feel good about this task.","sharedSecret":"<same-secret>","mode":"outline"}'
 ```
 
-## 9) Notes
+## 10) Notes
 
 - This project is intentionally minimal for easy Free-tier deployment.
 - Add rate limits / logging / stricter schema validation before production at scale.
