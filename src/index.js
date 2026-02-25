@@ -44,7 +44,7 @@ export default {
         return json(
           {
             ok: false,
-            error: 'Invalid mode. Use "outline" or "draft".'
+            error: 'Invalid mode. Use "outline", "draft", or "title".'
           },
           400
         );
@@ -200,7 +200,7 @@ function truncateToWordLimit(text, maxWords) {
 
 function normalizeMode(input) {
   const mode = (input || "outline").toString().trim().toLowerCase();
-  if (mode === "outline" || mode === "draft") {
+  if (mode === "outline" || mode === "draft" || mode === "title") {
     return mode;
   }
   return "";
@@ -222,13 +222,31 @@ function getSystemPromptForMode(env, mode) {
       "Return only valid HTML using <h3>, <h4>, <ul>, <li>, <p>.",
       "No markdown and no code fences."
     ].join(" ");
-  return mode === "draft" ? draftPrompt : outlinePrompt;
+  const titlePrompt =
+    env.SYSTEM_PROMPT_TITLE ||
+    [
+      "You are helping write a petition title.",
+      "Write exactly one concise call-to-action title.",
+      "Return plain text only with no markdown, HTML, or code fences."
+    ].join(" ");
+
+  if (mode === "draft") {
+    return draftPrompt;
+  }
+  if (mode === "title") {
+    return titlePrompt;
+  }
+  return outlinePrompt;
 }
 
 function getMaxWordsForMode(env, mode) {
-  const defaultLimit = mode === "draft" ? 400 : 100;
+  const defaultLimit = mode === "draft" ? 400 : mode === "title" ? 20 : 100;
   const configured =
-    mode === "draft" ? env.OUTPUT_MAX_WORDS_DRAFT : env.OUTPUT_MAX_WORDS_OUTLINE;
+    mode === "draft"
+      ? env.OUTPUT_MAX_WORDS_DRAFT
+      : mode === "title"
+        ? env.OUTPUT_MAX_WORDS_TITLE
+        : env.OUTPUT_MAX_WORDS_OUTLINE;
   const parsed = Number.parseInt(configured || "", 10);
   if (Number.isFinite(parsed) && parsed >= 0) {
     return parsed;

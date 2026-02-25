@@ -43,8 +43,10 @@ Set in `wrangler.toml` (non-secret):
 - `OPENAI_MODEL` (default in project: `gpt-4o-mini`)
 - `SYSTEM_PROMPT_OUTLINE` (system prompt when `mode=outline`)
 - `SYSTEM_PROMPT_DRAFT` (system prompt when `mode=draft`)
+- `SYSTEM_PROMPT_TITLE` (system prompt when `mode=title`)
 - `OUTPUT_MAX_WORDS_OUTLINE` (default `100`)
 - `OUTPUT_MAX_WORDS_DRAFT` (default `400`)
+- `OUTPUT_MAX_WORDS_TITLE` (default `20`)
 - `QUALTRICS_TEXT_FIELD` (request key to read free text, default: `participantText`)
 
 Set as Wrangler secrets:
@@ -64,7 +66,7 @@ In Survey Flow (after the block that collects free text):
 4. Body parameters:
    - `participantText` = piped text from your free-text question
    - `sharedSecret` = same value as `QUALTRICS_SHARED_SECRET`
-   - `mode` = `outline` or `draft`
+   - `mode` = `outline`, `draft`, or `title`
 5. Response parsing:
    - Map `model_response` from JSON into an Embedded Data field (for example `AI_Response`).
 
@@ -88,11 +90,12 @@ Returns JSON:
 }
 ```
 
-## 8) Two-call setup in Qualtrics (outline + draft)
+## 8) Three-call setup in Qualtrics (outline + draft + title)
 
 1. Add Embedded Data fields in Survey Flow:
    - `AI_Outline`
    - `AI_Draft`
+   - `AI_Title`
 2. Add Web Service call for outline:
    - `participantText` = `${q://QID25/ChoiceTextEntryValue}` (replace with your QID)
    - `sharedSecret` = your shared secret
@@ -103,8 +106,13 @@ Returns JSON:
    - `sharedSecret` = your shared secret
    - `mode` = `draft`
    - Response mapping: `model_response` -> `AI_Draft`
+4. Add Web Service call for title:
+   - `participantText` = `${q://QID25/ChoiceTextEntryValue}`
+   - `sharedSecret` = your shared secret
+   - `mode` = `title`
+   - Response mapping: `model_response` -> `AI_Title`
 
-You can run both calls, or branch and run only one based on prior survey logic.
+You can run all three calls, or branch and run only the one(s) needed based on prior survey logic.
 
 ## 9) Local test
 
