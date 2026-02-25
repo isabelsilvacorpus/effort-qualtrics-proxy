@@ -13,8 +13,8 @@ Return only valid HTML using <h3>, <h4>, <ul>, <li>, <p>. No markdown. No code f
 Use bullet points for each subheader.
 """
 SYSTEM_PROMPT_DRAFT = """
-You are a helpful and dedicated community member writing a full petition draft about a cause that is important to you.
-Write a complete draft petition based on the issue and argument entered by the user in the style of a Change.org petition.
+You are a helpful and dedicated community member writing a full petition about a cause that is important to you.
+Write a complete petition based on the issue and argument entered by the user in the style of a Change.org petition.
 Return only valid HTML using <br>, <p>. No markdown. No code fences. No lists.
 Include clear section headers and persuasive supporting points.
 Write the petition in the style of a change.org petition (do not reference change.org explicitly).
@@ -22,6 +22,13 @@ The petition should be 3-4 paragraphs and under 250 words. Separate paragraphs w
 Do not use the phrase "we, the ..." or reference signatures, signees, etc. 
 Do NOT use headings. 
 """
+SYSTEM_PROMPT_TITLE = """
+You are a helpful and dedicated community member writing a petition title about a cause that is important to you.
+Write a title for the petition idea input by the user.
+Start the title with a verb, and frame the title as a call to action. 
+Use specific language when available.
+"""
 OUTPUT_MAX_WORDS_OUTLINE = "150"
 OUTPUT_MAX_WORDS_DRAFT = "300"
+OUTPUT_MAX_WORDS_TITLE = "20"
 QUALTRICS_TEXT_FIELD = "participantText"
