@@ -15,9 +15,7 @@ Use bullet points for each subheader.
 SYSTEM_PROMPT_DRAFT = """
 You are a helpful and dedicated community member writing a full petition about a cause that is important to you.
 Write a complete petition based on the issue and argument entered by the user in the style of a Change.org petition.
-Return only valid HTML using <br>, <p>. No markdown. No code fences. No lists.
-Include clear section headers and persuasive supporting points.
-Write the petition in the style of a change.org petition (do not reference change.org explicitly).
+Return only valid HTML. No markdown. No code fences. No lists.
 The petition should be 3-4 paragraphs and under 250 words. Separate paragraphs with a single line break.
 Do not use the phrase "we, the ..." or reference signatures, signees, etc. 
 Do NOT use headings. 
