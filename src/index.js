@@ -11,7 +11,65 @@ export default {
     }
 
     const url = new URL(request.url);
-    if (request.method !== "POST" || url.pathname !== "/v1/qualtrics-chat") {
+    if (request.method !== "POST") {
+      return json({ ok: false, error: "Not found" }, 404);
+    }
+
+    if (url.pathname === "/v1/qualtrics-url") {
+      try {
+        const payload = await parsePayload(request);
+        const sharedSecret = (payload.sharedSecret || "").toString();
+        const responseIdField = env.QUALTRICS_RESPONSE_ID_FIELD || "responseId";
+        const responseId = (payload[responseIdField] || "").toString().trim();
+        const encryptionKey = (env.QUALTRICS_URL_ENCRYPTION_KEY || "").toString();
+
+        if (!env.QUALTRICS_SHARED_SECRET) {
+          return json({ ok: false, error: "Missing QUALTRICS_SHARED_SECRET" }, 500);
+        }
+        if (!encryptionKey) {
+          return json({ ok: false, error: "Missing QUALTRICS_URL_ENCRYPTION_KEY" }, 500);
+        }
+        if (sharedSecret !== env.QUALTRICS_SHARED_SECRET) {
+          return json({ ok: false, error: "Unauthorized" }, 401);
+        }
+        if (!responseId) {
+          return json(
+            {
+              ok: false,
+              error: `Missing or empty "${responseIdField}" in request body`
+            },
+            400
+          );
+        }
+
+        const token = await buildPetitionToken(responseId, encryptionKey);
+        const petitionBaseUrl = normalizePetitionBaseUrl(env.PETITION_BASE_URL);
+        const petitionUrl = `${petitionBaseUrl}petition-${token}/`;
+
+        return json(
+          {
+            ok: true,
+            response_id: responseId,
+            petition_token: token,
+            petition_url: petitionUrl
+          },
+          200
+        );
+      } catch (error) {
+        console.error("Unhandled worker error", {
+          message: String(error && error.message ? error.message : error)
+        });
+        return json(
+          {
+            ok: false,
+            error: "Unhandled worker error"
+          },
+          500
+        );
+      }
+    }
+
+    if (url.pathname !== "/v1/qualtrics-chat") {
       return json({ ok: false, error: "Not found" }, 404);
     }
 
@@ -278,4 +336,36 @@ function collectNumericFields(value, prefix, target) {
     const nextPrefix = prefix ? `${prefix}.${key}` : key;
     collectNumericFields(nestedValue, nextPrefix, target);
   }
+}
+
+function normalizePetitionBaseUrl(baseUrl) {
+  const defaultBaseUrl =
+    "https://cornellpetitionplatform.github.io/petition_platform/petitions/";
+  const normalized = (baseUrl || defaultBaseUrl).toString().trim();
+  if (!normalized) {
+    return defaultBaseUrl;
+  }
+  return normalized.endsWith("/") ? normalized : `${normalized}/`;
+}
+
+async function buildPetitionToken(responseId, encryptionKey) {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(encryptionKey),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const digest = await crypto.subtle.sign("HMAC", key, encoder.encode(responseId));
+  const tokenBytes = new Uint8Array(digest).slice(0, 15);
+  return toBase64Url(tokenBytes);
+}
+
+function toBase64Url(bytes) {
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }

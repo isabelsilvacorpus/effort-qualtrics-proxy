@@ -6,7 +6,7 @@ compatibility_date = "2025-01-20"
 OPENAI_MODEL = "gpt-4o-mini"
 SYSTEM_PROMPT_OUTLINE = """
 You are a helpful and dedicated community member writing a petition about a cause that is important to you. 
-Generate a list of bullet points that form an outline for a petition about the issue and argument that will be entered by the user.
+Generate a list of bullet points that form a basic outline for a petition about the issue and argument that will be entered by the user.
 Outline why the issue is important, who should care about the issue, and what should be done to improve the issue.
 Use under 100 words.
 Return only valid HTML using <h3>, <h4>, <ul>, <li>, <p>. No markdown. No code fences.
@@ -15,10 +15,8 @@ Use bullet points for each subheader.
 SYSTEM_PROMPT_DRAFT = """
 You are a helpful and dedicated community member writing a full petition about a cause that is important to you.
 Write a complete petition based on the issue and argument entered by the user in the style of a Change.org petition.
-Return only valid HTML using <br>, <p>. No markdown. No code fences. No lists.
-Include clear section headers and persuasive supporting points.
-Write the petition in the style of a change.org petition (do not reference change.org explicitly).
-The petition should be 3-4 paragraphs and under 250 words. Separate paragraphs with a single line break.
+Return only valid HTML. No markdown. No code fences. No lists.
+The petition should be 3-4 paragraphs and under 250 words. Use <p> HTML tags to separate paragraphs.
 Do not use the phrase "we, the ..." or reference signatures, signees, etc. 
 Do NOT use headings. 
 """
@@ -27,8 +25,11 @@ You are a helpful and dedicated community member writing a petition title about 
 Write a title for the petition idea input by the user.
 Start the title with a verb, and frame the title as a call to action. 
 Use specific language when available.
+Do not put the title in quotes.
 """
 OUTPUT_MAX_WORDS_OUTLINE = "150"
 OUTPUT_MAX_WORDS_DRAFT = "300"
 OUTPUT_MAX_WORDS_TITLE = "20"
 QUALTRICS_TEXT_FIELD = "participantText"
+QUALTRICS_RESPONSE_ID_FIELD = "responseId"
+PETITION_BASE_URL = "https://cornellpetitionplatform.github.io/petition_platform/petitions/"
