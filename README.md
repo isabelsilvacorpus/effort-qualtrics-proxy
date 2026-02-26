@@ -29,6 +29,7 @@ npm install
 npx wrangler login
 npx wrangler secret put OPENAI_API_KEY
 npx wrangler secret put QUALTRICS_SHARED_SECRET
+npx wrangler secret put QUALTRICS_URL_ENCRYPTION_KEY
 npx wrangler deploy
 ```
 
@@ -48,11 +49,14 @@ Set in `wrangler.toml` (non-secret):
 - `OUTPUT_MAX_WORDS_DRAFT` (default `400`)
 - `OUTPUT_MAX_WORDS_TITLE` (default `20`)
 - `QUALTRICS_TEXT_FIELD` (request key to read free text, default: `participantText`)
+- `QUALTRICS_RESPONSE_ID_FIELD` (request key to read response ID for URL generation, default: `responseId`)
+- `PETITION_BASE_URL` (prefix for generated petition URLs, default: `https://cornellpetitionplatform.github.io/petition_platform/petitions/`)
 
 Set as Wrangler secrets:
 
 - `OPENAI_API_KEY`
 - `QUALTRICS_SHARED_SECRET`
+- `QUALTRICS_URL_ENCRYPTION_KEY` (used for HMAC token generation)
 
 ## 6) Qualtrics setup (minimal)
 
@@ -132,3 +136,39 @@ curl -X POST "http://127.0.0.1:8787/v1/qualtrics-chat" \
 
 - This project is intentionally minimal for easy Free-tier deployment.
 - Add rate limits / logging / stricter schema validation before production at scale.
+
+## 11) URL generation endpoint (`/v1/qualtrics-url`)
+
+Use this endpoint when you want a deterministic petition URL from a Qualtrics response ID.
+
+Accepts either:
+
+- JSON: `{"responseId":"R_abc123","sharedSecret":"..."}`
+- Form-encoded: `responseId=R_abc123&sharedSecret=...`
+
+`responseId` can be renamed by setting `QUALTRICS_RESPONSE_ID_FIELD`.
+
+Returns JSON:
+
+```json
+{
+  "ok": true,
+  "response_id": "R_abc123",
+  "petition_token": "generated_token",
+  "petition_url": "https://cornellpetitionplatform.github.io/petition_platform/petitions/petition-generated_token/"
+}
+```
+
+Token generation matches:
+
+1. `HMAC-SHA256(key=QUALTRICS_URL_ENCRYPTION_KEY, message=responseId)`
+2. Truncate digest to first 15 bytes
+3. URL-safe base64 encode and strip `=`
+
+Example local test:
+
+```bash
+curl -X POST "http://127.0.0.1:8787/v1/qualtrics-url" \
+  -H "content-type: application/json" \
+  -d '{"responseId":"R_abc123","sharedSecret":"<same-secret>"}'
+```
