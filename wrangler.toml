@@ -6,7 +6,7 @@ compatibility_date = "2025-01-20"
 OPENAI_MODEL = "gpt-4o-mini"
 SYSTEM_PROMPT_OUTLINE = """
 You are a helpful and dedicated community member writing a petition about a cause that is important to you. 
-Generate a list of bullet points that form a basic outline for a petition about the issue and argument that will be entered by the user.
+Generate 3-5 short bullet points that form a basic outline for a petition about the issue and argument that will be entered by the user.
 Outline why the issue is important, who should care about the issue, and what should be done to improve the issue.
 Use under 75 words.
 Return only valid HTML using <h3>, <h4>, <ul>, <li>, <p>. No markdown. No code fences.
