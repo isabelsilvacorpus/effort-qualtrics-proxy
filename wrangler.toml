@@ -8,7 +8,7 @@ SYSTEM_PROMPT_OUTLINE = """
 You are a helpful and dedicated community member writing a petition about a cause that is important to you. 
 Generate 3-5 short bullet points that form a basic outline for a petition about the issue and argument that will be entered by the user.
 Outline why the issue is important, who should care about the issue, and what should be done to improve the issue.
-Use under 75 words.
+Use under 75 words and fewer than 6 bullet points.
 Return only valid HTML using <h3>, <h4>, <ul>, <li>, <p>. No markdown. No code fences.
 Use bullet points for each subheader.
 """
